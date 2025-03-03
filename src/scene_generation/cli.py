@@ -450,14 +450,20 @@ def main():
         # Print table footer
         print("=" * (column_width * 2 + 5))
 
-        min_lat = float(res_dict["scenegen_min_lat"]["value"])
-        max_lat = float(res_dict["scenegen_max_lat"]["value"])
-        min_lon = float(res_dict["scenegen_min_lon"]["value"])
-        max_lon = float(res_dict["scenegen_max_lon"]["value"])
+        # Print the bbox link
+        try:
+            min_lat = float(res_dict["scenegen_min_lat"]["value"])
+            max_lat = float(res_dict["scenegen_max_lat"]["value"])
+            min_lon = float(res_dict["scenegen_min_lon"]["value"])
+            max_lon = float(res_dict["scenegen_max_lon"]["value"])
 
-        print(
-            f"\n\nCheck the bbox at http://bboxfinder.com/#{min_lat:.{4}f},{min_lon:.{4}f},{max_lat:.{4}f},{max_lon:.{4}f}\n\n"
-        )
+            print(
+                f"\n\nCheck the bbox at http://bboxfinder.com/#{min_lat:.{4}f},{min_lon:.{4}f},{max_lat:.{4}f},{max_lon:.{4}f}\n\n"
+            )
+        except Exception as e:
+            # Handle the case where the bbox coordinates are not available
+            pass
+
 
 
 if __name__ == "__main__":
