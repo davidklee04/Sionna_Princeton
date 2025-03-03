@@ -21,6 +21,28 @@ import rasterio
 from typing import List, Tuple
 
 
+
+try:
+    from importlib.metadata import version as pkg_version, PackageNotFoundError
+except ImportError:
+    # For Python < 3.8, use importlib_metadata backport
+    from importlib_metadata import version as pkg_version, PackageNotFoundError
+import math
+
+PACKAGE_NAME = "scene_generation"
+
+
+def get_package_version() -> str:
+    """
+    Attempt to retrieve the installed package version from metadata.
+    Falls back to a default if the package isn't found (not installed).
+    """
+    try:
+        return pkg_version(PACKAGE_NAME)
+    except PackageNotFoundError:
+        return "0.0.0.dev (uninstalled)"
+    
+    
 # -------------------------------------------------------------------
 # 1) Geographic Coordinate System Related
 # -------------------------------------------------------------------

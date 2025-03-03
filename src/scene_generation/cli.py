@@ -16,28 +16,10 @@ import logging
 
 from argparse import ArgumentParser
 from .core import Scene
-from .utils import rect_from_point_and_size, print_if_int
+from .utils import rect_from_point_and_size, print_if_int, get_package_version, PACKAGE_NAME
 from .itu_materials import ITU_MATERIALS
 
-try:
-    from importlib.metadata import version as pkg_version, PackageNotFoundError
-except ImportError:
-    # For Python < 3.8, use importlib_metadata backport
-    from importlib_metadata import version as pkg_version, PackageNotFoundError
-import math
 
-PACKAGE_NAME = "scenegenerationpipe"
-
-
-def get_package_version() -> str:
-    """
-    Attempt to retrieve the installed package version from metadata.
-    Falls back to a default if the package isn't found (not installed).
-    """
-    try:
-        return pkg_version(PACKAGE_NAME)
-    except PackageNotFoundError:
-        return "0.0.0.dev (uninstalled)"
 
 
 def setup_logging(log_file="debug.log"):
