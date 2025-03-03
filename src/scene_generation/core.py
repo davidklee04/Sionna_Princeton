@@ -190,13 +190,18 @@ class Scene:
         ET.SubElement(scene, "default", name="scenegen_version", value=str(get_package_version()))
         ET.SubElement(scene, "default", name="scenegen_create_time", value=str(datetime.datetime.now()))
 
-
-        
-
         ET.SubElement(scene, "default", name="scenegen_min_lat", value=str(points[0][1]))
         ET.SubElement(scene, "default", name="scenegen_max_lat", value=str(points[1][1]))
         ET.SubElement(scene, "default", name="scenegen_min_lon", value=str(points[0][0]))
         ET.SubElement(scene, "default", name="scenegen_max_lon", value=str(points[2][0]))
+        
+
+
+        ET.SubElement(scene, "default", name="scenegen_ground_material", value=str(ground_material_type))
+        ET.SubElement(scene, "default", name="scenegen_rooftop_material", value=str(rooftop_material_type))
+        ET.SubElement(scene, "default", name="scenegen_wall_material", value=str(wall_material_type))
+
+        ET.SubElement(scene, "default", name="scenegen_UTM_zone", value=str(projection_UTM_EPSG_code))
         
        
 
@@ -273,6 +278,10 @@ class Scene:
 
         center_x = ground_polygon.envelope.centroid.x
         center_y = ground_polygon.envelope.centroid.y
+
+        ET.SubElement(scene, "default", name="scenegen_center_lat", value=f"{ground_polygon_4326.envelope.centroid.y:.6f}")
+        ET.SubElement(scene, "default", name="scenegen_center_lon", value=f"{ground_polygon_4326.envelope.centroid.x:.6f}")
+
 
         #######Open3D#######
         outer_xy = unique_coords(

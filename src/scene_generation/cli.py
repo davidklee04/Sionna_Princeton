@@ -16,10 +16,17 @@ import logging
 
 from argparse import ArgumentParser
 from .core import Scene
-from .utils import rect_from_point_and_size, print_if_int, get_package_version, PACKAGE_NAME
+from .utils import (
+    rect_from_point_and_size,
+    print_if_int,
+    get_package_version,
+    PACKAGE_NAME,
+)
 from .itu_materials import ITU_MATERIALS
 
+import xml.etree.ElementTree as ET
 
+import os
 
 
 def setup_logging(log_file="debug.log"):
@@ -157,6 +164,13 @@ def main():
     # Create subparsers for different subcommands
     subparsers = parser.add_subparsers(
         title="Subcommands", dest="command", help="Available subcommands."
+    )
+
+    # Subcommand 'validate': define a bounding box by four float coordinates
+    parser_validate = subparsers.add_parser(
+        "validate",
+        parents=[common_parser],
+        help=("Validate an existing scene file"),
     )
 
     # Subcommand 'bbox': define a bounding box by four float coordinates
@@ -325,10 +339,125 @@ def main():
             rooftop_material_type=list(ITU_MATERIALS.items())[args.rooftop_material][0],
             wall_material_type=list(ITU_MATERIALS.items())[args.wall_material][0],
         )
-    else:
-        # Should never happen if we covered all subcommands
-        parser.print_help()
-        sys.exit(1)
+    elif args.command == "validate":
+        res_dict = {
+            "scenegen_version": {
+                "display_name": "Scene File Creation Tool Version",
+                "value": "",
+            },
+            "scenegen_create_time": {
+                "display_name": "Scene File Creation Time",
+                "value": "",
+            },
+            "scenegen_min_lat": {
+                "display_name": "Min Latitude",
+                "value": "",
+            },
+            "scenegen_max_lat": {
+                "display_name": "Max Latitude",
+                "value": "",
+            },
+            "scenegen_min_lon": {
+                "display_name": "Min Longitude",
+                "value": "",
+            },
+            "scenegen_max_lon": {
+                "display_name": "Max Longitude",
+                "value": "",
+            },
+            "scenegen_center_lon": {
+                "display_name": "Center Longitude",
+                "value": "",
+            },
+            "scenegen_center_lat": {
+                "display_name": "Center Latitude",
+                "value": "",
+            },
+            "scenegen_ground_material": {
+                "display_name": "Ground Materials",
+                "value": "",
+            },
+            "scenegen_rooftop_material": {
+                "display_name": "Rooftop Materials",
+                "value": "",
+            },
+            "scenegen_wall_material": {
+                "display_name": "Wall Materials",
+                "value": "",
+            },
+            "scenegen_UTM_zone": {
+                "display_name": "UTM Zone",
+                "value": "",
+                "comment": "",
+            },
+            "scenegen_bbox_width": {
+                "display_name": "Boudning Box Width",
+                "value": "",
+                "comment": "meters (UTM Projection)",
+            },
+            "scenegen_bbox_length": {
+                "display_name": "Boudning Box Length",
+                "value": "",
+                "comment": "meters (UTM Projection)",
+            },
+        }
+        directory = args.data_dir
+        if not os.path.isdir(directory):
+            print(f"Error: The provided path '{directory}' is not a valid directory.")
+
+        scene_file = os.path.join(directory, "scene.xml")
+        if not os.path.isfile(scene_file):
+            print(f"Error: 'scene.xml' not found in '{directory}'.")
+
+        try:
+            # Parse the XML file
+            tree = ET.parse(scene_file)
+            root = tree.getroot()
+
+            # Iterate over all <default> tags
+            for default_tag in root.findall(".//default"):
+                key = default_tag.get("name")  # Get the attribute 'name'
+                value = default_tag.get("value") if default_tag.get("value") else ""
+
+                # If the key exists in res_dict, update the value
+                if key in res_dict:
+                    res_dict[key]["value"] = value
+
+        except ET.ParseError as e:
+            print(f"Error parsing XML file: {e}")
+
+        # Define column widths
+        column_width = 35  # Adjust this for better alignment
+
+        # Print table header
+        print("=" * (column_width * 2 + 5))
+        print(f"{'Field'.ljust(column_width)} | {'Value'.ljust(column_width)}")
+        print("=" * (column_width * 2 + 5))
+
+        # Print each key-value pair in the dictionary
+        for idx, (key, value) in enumerate(res_dict.items()):
+            display_name = value["display_name"]
+            display_value = value["value"] if value["value"] else "N/A"
+
+            display_value += " " + value.get("comment", "")
+
+            print(
+                f"{display_name.ljust(column_width)} | {display_value.ljust(column_width)}"
+            )
+            if idx != len(res_dict) - 1:
+                print("-" * (column_width * 2 + 5))
+
+        # Print table footer
+        print("=" * (column_width * 2 + 5))
+
+        min_lat = float(res_dict["scenegen_min_lat"]["value"])
+        max_lat = float(res_dict["scenegen_max_lat"]["value"])
+        min_lon = float(res_dict["scenegen_min_lon"]["value"])
+        max_lon = float(res_dict["scenegen_max_lon"]["value"])
+
+        print(
+            f"\n\nCheck the bbox at http://bboxfinder.com/#{min_lat:.{4}f},{min_lon:.{4}f},{max_lat:.{4}f},{max_lon:.{4}f}\n\n"
+        )
 
 
 if __name__ == "__main__":
