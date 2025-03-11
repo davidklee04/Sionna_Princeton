@@ -46,6 +46,25 @@ def get_package_version() -> str:
 # -------------------------------------------------------------------
 # 1) Geographic Coordinate System Related
 # -------------------------------------------------------------------
+
+def top_left_to_center(x, y, width, height):
+    """
+    Converts coordinates from a top-left origin system to a center-origin system.
+
+    Parameters:
+    x (float): X-coordinate in the top-left system.
+    y (float): Y-coordinate in the top-left system.
+    width (float): Total width of the coordinate space.
+    height (float): Total height of the coordinate space.
+
+    Returns:
+    (float, float): Transformed (x', y') in the center-origin system.
+    """
+    x_center = x - width / 2
+    y_center = (height / 2) - y
+    return x_center, y_center
+
+    
 def get_utm_epsg_code_from_gps(lon: float, lat: float) -> CRS:
     """
     Determine the UTM coordinate reference system (CRS) appropriate for a given
