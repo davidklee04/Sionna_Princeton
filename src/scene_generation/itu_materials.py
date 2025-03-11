@@ -100,4 +100,22 @@ ITU_MATERIALS = {
         "upper_freq_limit": 10e9,
         "mitsuba_color": (0.91, 0.569, 0.055)
     },
+    "mat-itu_very_dry_ground_P.527": {
+        "name": "Very Dry Ground (Extended Range, ITU P.527-3)",
+        "lower_freq_limit": 1e4,
+        "upper_freq_limit": 3e11,
+        "mitsuba_color": (0.4980, 0.4980, 0.4980),
+    },
+    "mat-itu_medium_dry_ground_P.527": {
+        "name": "Medium Dry Ground (Extended Range, ITU P.527-3)",
+        "lower_freq_limit": 1e4,
+        "upper_freq_limit": 3e11,
+        "mitsuba_color":(0.7804, 0.7804, 0.7804),
+    },
+    "mat-itu_wet_ground_P.527": {
+        "name": "Wet Ground (Extended Range, ITU P.527-3)",
+        "lower_freq_limit": 1e4,
+        "upper_freq_limit": 3e11,
+        "mitsuba_color": (0.91, 0.569, 0.055)
+    },
 }
