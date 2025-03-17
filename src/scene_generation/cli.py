@@ -213,7 +213,7 @@ def main():
 
     if args.list_materials:
         print("Available ITU materials and their frequency ranges:")
-        print("ID | {:^30} | Frequency Range (GHz)".format("Name", "lower", "upper"))
+        print("ID | {:^50} | Frequency Range (GHz)".format("Name", "lower", "upper"))
         for idx, item in enumerate(ITU_MATERIALS.items()):
             material, data = item
             if isinstance(data["lower_freq_limit"], list):
@@ -222,7 +222,7 @@ def main():
                 ):
                     if inner_idx == 0:
                         print(
-                            "{:<2} | {:<20} | {:^5} - {:^5}".format(
+                            "{:<2} | {:<50} | {:^5} - {:^5}".format(
                                 idx,
                                 data["name"],
                                 print_if_int(low / 1e9),
@@ -231,7 +231,7 @@ def main():
                         )
                     else:
                         print(
-                            "{:<2} | {:<20} | {:^5} - {:^5}".format(
+                            "{:<2} | {:<50} | {:^5} - {:^5}".format(
                                 "",
                                 "",
                                 print_if_int(low / 1e9),
@@ -241,17 +241,18 @@ def main():
 
             else:
                 print(
-                    "{:<2} | {:<20} | {:^5} - {:^5}".format(
+                    "{:<2} | {:<50} | {:^5} - {:^5}".format(
                         idx,
                         data["name"],
                         print_if_int(data["lower_freq_limit"] / 1e9),
                         print_if_int(data["upper_freq_limit"] / 1e9),
                     )
                 )
-            print("-" * 51)
+            print("-" * 80)
 
         print(
-            'Material properties based on ITU-R Recommendation P.2040-2: \n\t"Effects of building materials and structures on radiowave propagation above about 100 MHz"'
+            'Material properties based on\n\tITU-R P.2040-2:"Effects of building materials and structures on radiowave propagation above about 100 MHz"',
+            '\n\tITU P.527-3: "Electrical characteristics of the surface of the earth"'
         )
         sys.exit(0)
 
