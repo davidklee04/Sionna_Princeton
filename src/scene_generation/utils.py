@@ -21,9 +21,50 @@ import rasterio
 from typing import List, Tuple
 
 
+
+try:
+    from importlib.metadata import version as pkg_version, PackageNotFoundError
+except ImportError:
+    # For Python < 3.8, use importlib_metadata backport
+    from importlib_metadata import version as pkg_version, PackageNotFoundError
+import math
+
+PACKAGE_NAME = "scene_generation"
+
+
+def get_package_version() -> str:
+    """
+    Attempt to retrieve the installed package version from metadata.
+    Falls back to a default if the package isn't found (not installed).
+    """
+    try:
+        return pkg_version(PACKAGE_NAME)
+    except PackageNotFoundError:
+        return "0.0.0.dev (uninstalled)"
+    
+    
 # -------------------------------------------------------------------
 # 1) Geographic Coordinate System Related
 # -------------------------------------------------------------------
+
+def top_left_to_center(x, y, width, height):
+    """
+    Converts coordinates from a top-left origin system to a center-origin system.
+
+    Parameters:
+    x (float): X-coordinate in the top-left system.
+    y (float): Y-coordinate in the top-left system.
+    width (float): Total width of the coordinate space.
+    height (float): Total height of the coordinate space.
+
+    Returns:
+    (float, float): Transformed (x', y') in the center-origin system.
+    """
+    x_center = x - width / 2
+    y_center = (height / 2) - y
+    return x_center, y_center
+
+    
 def get_utm_epsg_code_from_gps(lon: float, lat: float) -> CRS:
     """
     Determine the UTM coordinate reference system (CRS) appropriate for a given

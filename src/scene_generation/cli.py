@@ -16,28 +16,17 @@ import logging
 
 from argparse import ArgumentParser
 from .core import Scene
-from .utils import rect_from_point_and_size, print_if_int
+from .utils import (
+    rect_from_point_and_size,
+    print_if_int,
+    get_package_version,
+    PACKAGE_NAME,
+)
 from .itu_materials import ITU_MATERIALS
 
-try:
-    from importlib.metadata import version as pkg_version, PackageNotFoundError
-except ImportError:
-    # For Python < 3.8, use importlib_metadata backport
-    from importlib_metadata import version as pkg_version, PackageNotFoundError
-import math
+import xml.etree.ElementTree as ET
 
-PACKAGE_NAME = "scenegenerationpipe"
-
-
-def get_package_version() -> str:
-    """
-    Attempt to retrieve the installed package version from metadata.
-    Falls back to a default if the package isn't found (not installed).
-    """
-    try:
-        return pkg_version(PACKAGE_NAME)
-    except PackageNotFoundError:
-        return "0.0.0.dev (uninstalled)"
+import os
 
 
 def setup_logging(log_file="debug.log"):
@@ -177,6 +166,13 @@ def main():
         title="Subcommands", dest="command", help="Available subcommands."
     )
 
+    # Subcommand 'validate': define a bounding box by four float coordinates
+    parser_validate = subparsers.add_parser(
+        "validate",
+        parents=[common_parser],
+        help=("Validate an existing scene file"),
+    )
+
     # Subcommand 'bbox': define a bounding box by four float coordinates
     parser_bbox = subparsers.add_parser(
         "bbox",
@@ -217,7 +213,7 @@ def main():
 
     if args.list_materials:
         print("Available ITU materials and their frequency ranges:")
-        print("ID | {:^30} | Frequency Range (GHz)".format("Name", "lower", "upper"))
+        print("ID | {:^50} | Frequency Range (GHz)".format("Name", "lower", "upper"))
         for idx, item in enumerate(ITU_MATERIALS.items()):
             material, data = item
             if isinstance(data["lower_freq_limit"], list):
@@ -226,7 +222,7 @@ def main():
                 ):
                     if inner_idx == 0:
                         print(
-                            "{:<2} | {:<20} | {:^5} - {:^5}".format(
+                            "{:<2} | {:<50} | {:^5} - {:^5}".format(
                                 idx,
                                 data["name"],
                                 print_if_int(low / 1e9),
@@ -235,7 +231,7 @@ def main():
                         )
                     else:
                         print(
-                            "{:<2} | {:<20} | {:^5} - {:^5}".format(
+                            "{:<2} | {:<50} | {:^5} - {:^5}".format(
                                 "",
                                 "",
                                 print_if_int(low / 1e9),
@@ -245,17 +241,18 @@ def main():
 
             else:
                 print(
-                    "{:<2} | {:<20} | {:^5} - {:^5}".format(
+                    "{:<2} | {:<50} | {:^5} - {:^5}".format(
                         idx,
                         data["name"],
                         print_if_int(data["lower_freq_limit"] / 1e9),
                         print_if_int(data["upper_freq_limit"] / 1e9),
                     )
                 )
-            print("-" * 51)
+            print("-" * 80)
 
         print(
-            'Material properties based on ITU-R Recommendation P.2040-2: \n\t"Effects of building materials and structures on radiowave propagation above about 100 MHz"'
+            'Material properties based on\n\tITU-R P.2040-2:"Effects of building materials and structures on radiowave propagation above about 100 MHz"',
+            '\n\tITU P.527-3: "Electrical characteristics of the surface of the earth"'
         )
         sys.exit(0)
 
@@ -343,10 +340,131 @@ def main():
             rooftop_material_type=list(ITU_MATERIALS.items())[args.rooftop_material][0],
             wall_material_type=list(ITU_MATERIALS.items())[args.wall_material][0],
         )
-    else:
-        # Should never happen if we covered all subcommands
-        parser.print_help()
-        sys.exit(1)
+    elif args.command == "validate":
+        res_dict = {
+            "scenegen_version": {
+                "display_name": "Scene File Creation Tool Version",
+                "value": "",
+            },
+            "scenegen_create_time": {
+                "display_name": "Scene File Creation Time",
+                "value": "",
+            },
+            "scenegen_min_lat": {
+                "display_name": "Min Latitude",
+                "value": "",
+            },
+            "scenegen_max_lat": {
+                "display_name": "Max Latitude",
+                "value": "",
+            },
+            "scenegen_min_lon": {
+                "display_name": "Min Longitude",
+                "value": "",
+            },
+            "scenegen_max_lon": {
+                "display_name": "Max Longitude",
+                "value": "",
+            },
+            "scenegen_center_lon": {
+                "display_name": "Center Longitude",
+                "value": "",
+            },
+            "scenegen_center_lat": {
+                "display_name": "Center Latitude",
+                "value": "",
+            },
+            "scenegen_ground_material": {
+                "display_name": "Ground Materials",
+                "value": "",
+            },
+            "scenegen_rooftop_material": {
+                "display_name": "Rooftop Materials",
+                "value": "",
+            },
+            "scenegen_wall_material": {
+                "display_name": "Wall Materials",
+                "value": "",
+            },
+            "scenegen_UTM_zone": {
+                "display_name": "UTM Zone",
+                "value": "",
+                "comment": "",
+            },
+            "scenegen_bbox_width": {
+                "display_name": "Boudning Box Width",
+                "value": "",
+                "comment": "meters (UTM Projection)",
+            },
+            "scenegen_bbox_length": {
+                "display_name": "Boudning Box Length",
+                "value": "",
+                "comment": "meters (UTM Projection)",
+            },
+        }
+        directory = args.data_dir
+        if not os.path.isdir(directory):
+            print(f"Error: The provided path '{directory}' is not a valid directory.")
+
+        scene_file = os.path.join(directory, "scene.xml")
+        if not os.path.isfile(scene_file):
+            print(f"Error: 'scene.xml' not found in '{directory}'.")
+
+        try:
+            # Parse the XML file
+            tree = ET.parse(scene_file)
+            root = tree.getroot()
+
+            # Iterate over all <default> tags
+            for default_tag in root.findall(".//default"):
+                key = default_tag.get("name")  # Get the attribute 'name'
+                value = default_tag.get("value") if default_tag.get("value") else ""
+
+                # If the key exists in res_dict, update the value
+                if key in res_dict:
+                    res_dict[key]["value"] = value
+
+        except ET.ParseError as e:
+            print(f"Error parsing XML file: {e}")
+
+        # Define column widths
+        column_width = 35  # Adjust this for better alignment
+
+        # Print table header
+        print("=" * (column_width * 2 + 5))
+        print(f"{'Field'.ljust(column_width)} | {'Value'.ljust(column_width)}")
+        print("=" * (column_width * 2 + 5))
+
+        # Print each key-value pair in the dictionary
+        for idx, (key, value) in enumerate(res_dict.items()):
+            display_name = value["display_name"]
+            display_value = value["value"] if value["value"] else "N/A"
+
+            display_value += " " + value.get("comment", "")
+
+            print(
+                f"{display_name.ljust(column_width)} | {display_value.ljust(column_width)}"
+            )
+            if idx != len(res_dict) - 1:
+                print("-" * (column_width * 2 + 5))
+
+        # Print table footer
+        print("=" * (column_width * 2 + 5))
+
+        # Print the bbox link
+        try:
+            min_lat = float(res_dict["scenegen_min_lat"]["value"])
+            max_lat = float(res_dict["scenegen_max_lat"]["value"])
+            min_lon = float(res_dict["scenegen_min_lon"]["value"])
+            max_lon = float(res_dict["scenegen_max_lon"]["value"])
+
+            print(
+                f"\n\nCheck the bbox at http://bboxfinder.com/#{min_lat:.{4}f},{min_lon:.{4}f},{max_lat:.{4}f},{max_lon:.{4}f}\n\n"
+            )
+        except Exception as e:
+            # Handle the case where the bbox coordinates are not available
+            pass
+
 
 
 if __name__ == "__main__":

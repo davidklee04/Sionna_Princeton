@@ -100,4 +100,122 @@ ITU_MATERIALS = {
         "upper_freq_limit": 10e9,
         "mitsuba_color": (0.91, 0.569, 0.055)
     },
+    "mat-itu_very_dry_ground_P.527": {
+        "name": "Very Dry Ground (Extended Range, ITU P.527-3)",
+        "lower_freq_limit": 1e4,
+        "upper_freq_limit": 3e11,
+        "mitsuba_color": (0.4980, 0.4980, 0.4980),
+    },
+    "mat-itu_medium_dry_ground_P.527": {
+        "name": "Medium Dry Ground (Extended Range, ITU P.527-3)",
+        "lower_freq_limit": 1e4,
+        "upper_freq_limit": 3e11,
+        "mitsuba_color":(0.7804, 0.7804, 0.7804),
+    },
+    "mat-itu_wet_ground_P.527": {
+        "name": "Wet Ground (Extended Range, ITU P.527-3)",
+        "lower_freq_limit": 1e4,
+        "upper_freq_limit": 3e11,
+        "mitsuba_color": (0.91, 0.569, 0.055)
+    },
 }
+import pandas as pd
+import scene_generation.data 
+
+from importlib_resources import files
+from scipy.interpolate import make_smoothing_spline
+
+def get_material(material_name):
+    from sionna.rt import RadioMaterial
+    material_dict = {
+        "mat-itu_wet_ground_P.527":RadioMaterial("itu_wet_ground_P.527",
+                                                 frequency_update_callback=wet_ground_ITU_P527_callback),
+        "mat-itu_medium_dry_ground_P.527":RadioMaterial("itu_medium_dry_ground_P.527",
+                                                        frequency_update_callback=medium_dry_ground_ITU_P527_callback),
+        "mat-itu_very_dry_ground_P.527":RadioMaterial("itu_very_dry_ground_P.527",
+                                                        frequency_update_callback=very_dry_ground_ITU_P527_callback),
+    }
+    if material_name not in material_dict.keys():
+        return None
+    else:
+        return material_dict[material_name]
+def wet_ground_ITU_P527_callback(f_hz):
+
+    f_mhz = f_hz / 1e6
+    if f_mhz < 1e-2 or f_mhz > 3e5:
+        return (-1.0, -1.0)
+
+ 
+
+    
+    # Read and process conductivity, permittivity data extracted from PDF
+    with files('scene_generation.data').joinpath("B_wet_ground_con.csv").open("r") as f:
+        df_con = pd.read_csv(f, header=None, names=["x", "y"])
+    df_con = df_con.sort_values(by="x")
+    
+    with files('scene_generation.data').joinpath("B_wet_ground_per.csv").open("r") as f:
+        df_per = pd.read_csv(f, header=None, names=["x", "y"])
+    df_per = df_per.sort_values(by="x")
+
+    # Fit a smoothing spline 
+    spl_con = make_smoothing_spline(df_con["x"], df_con["y"])
+    spl_per = make_smoothing_spline(df_per["x"], df_per["y"])
+
+    
+    relative_permittivity = spl_per(f_mhz)
+    conductivity = spl_con(f_mhz)
+    
+    return (relative_permittivity.item(), conductivity.item())
+
+def medium_dry_ground_ITU_P527_callback(f_hz):
+
+    f_mhz = f_hz / 1e6
+    if f_mhz < 1e-2 or f_mhz > 3e5:
+        return (-1.0, -1.0)
+
+ 
+
+    
+    # Read and process conductivity, permittivity data extracted from PDF
+    with files('scene_generation.data').joinpath("D_medium_dry_ground_con.csv").open("r") as f:
+        df_con = pd.read_csv(f, header=None, names=["x", "y"])
+    df_con = df_con.sort_values(by="x")
+    
+    with files('scene_generation.data').joinpath("D_medium_dry_ground_per.csv").open("r") as f:
+        df_per = pd.read_csv(f, header=None, names=["x", "y"])
+    df_per = df_per.sort_values(by="x")
+
+    # Fit a smoothing spline 
+    spl_con = make_smoothing_spline(df_con["x"], df_con["y"])
+    spl_per = make_smoothing_spline(df_per["x"], df_per["y"])
+
+    
+    relative_permittivity = spl_per(f_mhz)
+    conductivity = spl_con(f_mhz)
+    return (relative_permittivity.item(), conductivity.item())
+
+def very_dry_ground_ITU_P527_callback(f_hz):
+    f_mhz = f_hz / 1e6
+    if f_mhz < 1e-2 or f_mhz > 3e5:
+        return (-1.0, -1.0)
+
+
+    
+    # Read and process conductivity, permittivity data extracted from PDF
+    with files('scene_generation.data').joinpath("E_very_dry_ground_con.csv").open("r") as f:
+        df_con = pd.read_csv(f, header=None, names=["x", "y"])
+    df_con = df_con.sort_values(by="x")
+    
+    with files('scene_generation.data').joinpath("E_very_dry_ground_per.csv").open("r") as f:
+        df_per = pd.read_csv(f, header=None, names=["x", "y"])
+    df_per = df_per.sort_values(by="x")
+
+    # Fit a smoothing spline 
+    spl_con = make_smoothing_spline(df_con["x"], df_con["y"])
+    spl_per = make_smoothing_spline(df_per["x"], df_per["y"])
+
+    
+    relative_permittivity = spl_per(f_mhz)
+    conductivity = spl_con(f_mhz)
+    
+    return (relative_permittivity.item(), conductivity.item())

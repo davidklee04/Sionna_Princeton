@@ -21,6 +21,8 @@ from .utils import *
 from .itu_materials import ITU_MATERIALS
 import open3d.core as o3c
 
+import datetime
+
 
 # Create a module-level logger
 logger = logging.getLogger(__name__)
@@ -162,10 +164,7 @@ class Scene:
         print_material_info("Building Wall", wall_material_type)
         logger.info("")
 
-        # Default Mitsuba rendering parameters
-        spp_default = 4096
-        resx_default = 1024
-        resy_default = 768
+
 
         camera_settings = {
             "rotation": (0, 0, -90),  # Assuming Z-up orientation
@@ -176,11 +175,35 @@ class Scene:
         # 3) Build the XML scene root
         # ---------------------------------------------------------------------
 
+
+        # Default Mitsuba rendering parameters
+        spp_default = 4096
+        resx_default = 1024
+        resy_default = 1024
+
         scene = ET.Element("scene", version="2.1.0")
         # Default integrator / film settings
         ET.SubElement(scene, "default", name="spp", value=str(spp_default))
         ET.SubElement(scene, "default", name="resx", value=str(resx_default))
         ET.SubElement(scene, "default", name="resy", value=str(resy_default))
+
+        ET.SubElement(scene, "default", name="scenegen_version", value=str(get_package_version()))
+        ET.SubElement(scene, "default", name="scenegen_create_time", value=str(datetime.datetime.now()))
+
+        ET.SubElement(scene, "default", name="scenegen_min_lat", value=str(points[0][1]))
+        ET.SubElement(scene, "default", name="scenegen_max_lat", value=str(points[1][1]))
+        ET.SubElement(scene, "default", name="scenegen_min_lon", value=str(points[0][0]))
+        ET.SubElement(scene, "default", name="scenegen_max_lon", value=str(points[2][0]))
+        
+
+
+        ET.SubElement(scene, "default", name="scenegen_ground_material", value=str(ground_material_type))
+        ET.SubElement(scene, "default", name="scenegen_rooftop_material", value=str(rooftop_material_type))
+        ET.SubElement(scene, "default", name="scenegen_wall_material", value=str(wall_material_type))
+
+        ET.SubElement(scene, "default", name="scenegen_UTM_zone", value=str(projection_UTM_EPSG_code))
+        
+       
 
         integrator = ET.SubElement(scene, "integrator", type="path")
         ET.SubElement(integrator, "integer", name="max_depth", value="12")
@@ -256,6 +279,10 @@ class Scene:
         center_x = ground_polygon.envelope.centroid.x
         center_y = ground_polygon.envelope.centroid.y
 
+        ET.SubElement(scene, "default", name="scenegen_center_lat", value=f"{ground_polygon_4326.envelope.centroid.y:.6f}")
+        ET.SubElement(scene, "default", name="scenegen_center_lon", value=f"{ground_polygon_4326.envelope.centroid.x:.6f}")
+
+
         #######Open3D#######
         outer_xy = unique_coords(
             reorder_localize_coords(ground_polygon.exterior, center_x, center_y)
@@ -328,6 +355,9 @@ class Scene:
         width = math.ceil(ground_polygon_bbox[2] - ground_polygon_bbox[0])
         height = math.ceil(ground_polygon_bbox[3] - ground_polygon_bbox[1])
         logger.info(f"Estimated ground polygon size: width={width}m, height={height}m")
+
+        ET.SubElement(scene, "default", name="scenegen_bbox_width", value=str(width))
+        ET.SubElement(scene, "default", name="scenegen_bbox_length", value=str(height))
 
         if width > 5000 or height > 5000:
             logger.warning(f"Too large!")

@@ -18,3 +18,11 @@ requires-python = ">=3.9"
 
 [project.scripts]
 scenegen = "scene_generation.cli:main"
+
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+
+[tool.setuptools.package-data]
+"scene_generation.data" = ["*.csv"]
