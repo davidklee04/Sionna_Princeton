@@ -23,6 +23,8 @@ import open3d.core as o3c
 
 import datetime
 
+import pyvista as pv
+
 
 # Create a module-level logger
 logger = logging.getLogger(__name__)
@@ -303,7 +305,7 @@ class Scene:
         
         generate_hag(ground_polygon_4326, data_dir, projection_UTM_EPSG_code)
         
-        generate_terrain_mesh(os.path.join(data_dir, "test_hag.laz"),
+        surface_mesh = generate_terrain_mesh(os.path.join(data_dir, "test_hag.laz"),
                 os.path.join(mesh_data_dir, f"lidar_terrain.ply"), src_crs=projection_UTM_EPSG_code, dest_crs=projection_UTM_EPSG_code,
                 plot_figures=False, center_x=center_x, center_y=center_y)
         
@@ -482,6 +484,44 @@ class Scene:
             outer_xy = unique_coords(
                 reorder_localize_coords(building_polygon.exterior, center_x, center_y)
             )
+            
+            
+            if lidar_terrain:
+                mesh = surface_mesh
+                # Z bounds of the mesh
+                bottom, top = mesh.bounds[-2:]
+                buffer = 1.0
+                res_z = []
+                for points in outer_xy:
+                    # Define two points that form a line that interesects the mesh
+                    x = points[0]
+                    y = points[1]
+                    start = [x, y, bottom - buffer]
+                    stop = [x, y, top + buffer]
+                    
+                    # Perform ray trace
+                    points, ind = mesh.ray_trace(start, stop)
+                    
+                    # Create geometry to represent ray trace
+                    ray = pv.Line(start, stop)
+                    intersection = pv.PolyData(points)
+                    res_z.append(intersection.bounds[-1])
+
+                res_z = np.array(res_z)
+                res_z[res_z == -1e+299] = 1e+299
+                #print(res_z)
+                building_z_value = int(np.floor(np.min(res_z)))
+
+                
+                if building_z_value > 1e+20:
+                    building_z_value = 0
+            else:
+                building_z_value = 0
+                
+        
+            #print("Building's Z-value: ", building_z_value)
+            
+            
 
             holes_xy = []
             if len(list(building_polygon.interiors)) != 0:
@@ -524,7 +564,9 @@ class Scene:
             # print(v)
             # print(f)
 
-            points = np.concatenate([v, np.zeros((nv, 1))], axis=1)
+            #points = np.concatenate([v, np.zeros((nv, 1))], axis=1)
+            points = np.concatenate([v, np.full((nv, 1), fill_value=building_z_value)], axis=1)
+    
             mesh_o3d = o3d.t.geometry.TriangleMesh()
             mesh_o3d.vertex.positions = o3d.core.Tensor(points)
             mesh_o3d.triangle.indices = o3d.core.Tensor(f)
@@ -542,9 +584,11 @@ class Scene:
             face_centroids = np.mean(vertices_np[faces_np], axis=1)
 
             z_values = vertices_np[:, 2]
-            top_vertex_indices = np.where(z_values == building_height)[
+            top_vertex_indices = np.where(z_values == building_height + building_z_value)[
                 0
             ].tolist()  # Indices of top vertices
+
+
 
             # Extract the top surface
             top_surface = wedge_t.select_by_index(top_vertex_indices)
@@ -599,7 +643,7 @@ class Scene:
             ET.SubElement(sionna_shape, "boolean", name="face_normals", value="true")
 
             if generate_building_map:
-                self._draw_building(building_polygon, building_height)
+                self._draw_building(building_polygon, building_height+building_z_value)
 
         del hag_handler
         xml_string = ET.tostring(scene, encoding="utf-8")

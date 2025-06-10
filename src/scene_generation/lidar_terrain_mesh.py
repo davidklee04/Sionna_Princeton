@@ -7,6 +7,7 @@ import pyvista as pv
 from pyproj import Transformer
 
 from plyfile import PlyData, PlyElement
+from scipy.spatial import cKDTree
 
 def generate_terrain_mesh(lidar_laz_file_path, ply_save_path, src_crs="EPSG:3857", dest_crs="EPSG:32617", plot_figures=False, center_x = 0, center_y = 0):
     print("generate_terrain_mesh")
@@ -44,6 +45,23 @@ def generate_terrain_mesh(lidar_laz_file_path, ply_save_path, src_crs="EPSG:3857
     x_ground, y_ground = transformer.transform(x_ground, y_ground)
     print(x_ground)
     print(y_ground)
+    
+    
+    # Combine X and Y into a 2D array for KD-Tree search
+    points_2d = np.vstack((x_ground, y_ground)).T
+    tree = cKDTree(points_2d)
+    
+    # Query the nearest point to the target coordinates
+    distance, index = tree.query([center_x, center_y])
+    
+    # Get the Z-value of the nearest pointo
+    nearest_z = z_ground[index]
+    
+    
+    # Normalize the Z-values by setting the minimum Z to 0
+    z_ground = z_ground - nearest_z
+    
+    
 
     x_ground = x_ground - center_x
     y_ground = y_ground - center_y
@@ -51,8 +69,8 @@ def generate_terrain_mesh(lidar_laz_file_path, ply_save_path, src_crs="EPSG:3857
     
 
 
-     # Normalize the Z-values by setting the minimum Z to 0
-    z_ground = z_ground - np.min(z_ground)-10
+    #  # Normalize the Z-values by setting the minimum Z to 0
+    # z_ground = z_ground - np.min(z_ground)-10
 
     points = np.vstack((x_ground, y_ground, z_ground)).T
     point_cloud = pv.PolyData(points)
@@ -94,6 +112,7 @@ def generate_terrain_mesh(lidar_laz_file_path, ply_save_path, src_crs="EPSG:3857
         plotter = pv.Plotter()
         plotter.add_mesh(surface_mesh, scalars=surface_mesh.points[:, 2], cmap="terrain")
         plotter.show()
+    return surface_mesh
 
 def remove_obj_info_from_ply(input_ply_path, output_ply_path):
     # Open the input PLY file in binary read mode
