@@ -363,7 +363,7 @@ class Scene:
 
         sionna_shape = ET.SubElement(scene, "shape", type="ply", id=f"mesh-ground")
         if lidar_terrain:
-            ET.SubElement(sionna_shape, "string", type="filename", id=f"mesh/lidar_terrain.ply")
+            ET.SubElement(sionna_shape, "string", name="filename", value=f"mesh/lidar_terrain.ply")
         else:
             ET.SubElement(sionna_shape, "string", name="filename", value=f"mesh/ground.ply")
         bsdf_ref = ET.SubElement(
