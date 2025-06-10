@@ -97,6 +97,12 @@ class Scene:
         if wall_material_type not in ITU_MATERIALS:
             raise ValueError(f"Invalid wall material type: {wall_material_type}")
 
+
+
+
+        
+        
+        
         # ---------------------------------------------------------------------
         # 1) Setup OSM server and transforms
         # ---------------------------------------------------------------------
@@ -210,6 +216,10 @@ class Scene:
 
         # Define materials
         for material_id, material_content in ITU_MATERIALS.items():
+            
+            # Temporary workaround for Sionna v1.1 : Skip vacuum and P.527 materials.
+            if "vacuum" in material_id or "P.527" in material_id:
+                continue
             bsdf_twosided = ET.SubElement(
                 scene, "bsdf", type="twosided", id=material_id
             )
@@ -282,6 +292,21 @@ class Scene:
         ET.SubElement(scene, "default", name="scenegen_center_lat", value=f"{ground_polygon_4326.envelope.centroid.y:.6f}")
         ET.SubElement(scene, "default", name="scenegen_center_lon", value=f"{ground_polygon_4326.envelope.centroid.x:.6f}")
 
+
+        # ---------------------------------------------------------------------
+        # 0) Query USGS 3DEP LiDAR data and generate GEOTIFF file for building height calibration
+        # ---------------------------------------------------------------------
+        
+        from .USGS_LiDAR_HAG import generate_hag
+        from .lidar_terrain_mesh import generate_terrain_mesh
+        
+        generate_hag(ground_polygon_4326, data_dir, projection_UTM_EPSG_code)
+        
+        generate_terrain_mesh(os.path.join(data_dir, "test_hag.laz"),
+                os.path.join(mesh_data_dir, f"lidar_terrain.ply"), src_crs=projection_UTM_EPSG_code, dest_crs=projection_UTM_EPSG_code,
+                plot_figures=False, center_x=center_x, center_y=center_y)
+        
+        
 
         #######Open3D#######
         outer_xy = unique_coords(
