@@ -88,7 +88,7 @@ def generate_terrain_mesh(lidar_laz_file_path, ply_save_path, src_crs="EPSG:3857
 
     pro_decimated = surface_mesh.decimate_pro(0.90, preserve_topology=True)
     print("pro_decimated # of faces: ", pro_decimated.n_faces)
-    surface_mesh = pro_decimated
+    surface_mesh = surface_mesh
             # Extract vertices and faces from the PyVista surface mesh
     vertices = surface_mesh.points
     faces = surface_mesh.faces.reshape(-1, 4)[:, 1:4]  # Ignore the first element which is the number of vertices per face
