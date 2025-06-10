@@ -130,6 +130,12 @@ def main():
         action="store_true",
         help="Enable 2D building map output.",
     )
+    
+    common_parser.add_argument(
+        "--enable-lidar-terrain",
+        action="store_true",
+        help="Using USGS LiDAR data to generate terrain mesh.",
+    )
 
     common_parser.add_argument(
         "--ground-material",
@@ -318,6 +324,7 @@ def main():
             ground_material_type=list(ITU_MATERIALS.items())[args.ground_material][0],
             rooftop_material_type=list(ITU_MATERIALS.items())[args.rooftop_material][0],
             wall_material_type=list(ITU_MATERIALS.items())[args.wall_material][0],
+            lidar_terrain=args.enable_lidar_terrain,
         )
     elif args.command == "point":
         polygon_points_gps = rect_from_point_and_size(

@@ -60,6 +60,7 @@ class Scene:
         ground_material_type="mat-itu_wet_ground",
         rooftop_material_type="mat-itu_metal",
         wall_material_type="mat-itu_concrete",
+        lidar_terrain:bool = False,
     ):
         """
         Generate a ground mesh from the given polygon (defined by `points`),
@@ -361,7 +362,10 @@ class Scene:
         )
 
         sionna_shape = ET.SubElement(scene, "shape", type="ply", id=f"mesh-ground")
-        ET.SubElement(sionna_shape, "string", name="filename", value=f"mesh/ground.ply")
+        if lidar_terrain:
+            ET.SubElement(sionna_shape, "string", type="filename", id=f"mesh/lidar_terrain.ply")
+        else:
+            ET.SubElement(sionna_shape, "string", name="filename", value=f"mesh/ground.ply")
         bsdf_ref = ET.SubElement(
             sionna_shape, "ref", id=ground_material_type, name="bsdf"
         )
