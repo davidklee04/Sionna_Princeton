@@ -139,7 +139,7 @@ def build_pdal_pipeline(extent_epsg3857, usgs_3dep_dataset_names, pc_resolution,
 
     reprojection_stage = {
         "type": "filters.reprojection",
-        "out_srs": "EPSG:{}".format(outCRS)
+        "out_srs": outCRS
     }
 
     pointcloud_pipeline['pipeline'].append(reprojection_stage)
@@ -329,7 +329,7 @@ def generate_hag(polygon, data_dir, CRS="EPSG:3857"):
     geometries_GCS = df['geometry']
     geometries_EPSG3857 = gpd.GeoSeries(projected_geoms)
 
-    print('Done. 3DEP polygons downloaded and projected to ', CRS)
+    print('Done. 3DEP polygons downloaded and projected to ', CRS.to_string())
 
     AOI_EPSG3857 = proj_to_3857(polygon, "EPSG:4326")[1]
     print("Area of Interest:", AOI_EPSG3857)
@@ -355,7 +355,7 @@ def generate_hag(polygon, data_dir, CRS="EPSG:3857"):
             filterNoise=True, 
             reclassify=False, 
             savePointCloud=True, 
-            outCRS=3857,
+            outCRS=CRS.to_string(),
             pc_outName=os.path.join(data_dir, 'pointcloud_test'), 
             pc_outType='laz', 
             demType='hag',

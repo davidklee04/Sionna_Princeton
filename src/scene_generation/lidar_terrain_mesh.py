@@ -48,6 +48,7 @@ def generate_terrain_mesh(lidar_laz_file_path, ply_save_path, src_crs="EPSG:3857
     x_ground = x_ground - center_x
     y_ground = y_ground - center_y
     print("centerx, y", center_x, center_y)
+    
 
 
      # Normalize the Z-values by setting the minimum Z to 0
@@ -62,8 +63,14 @@ def generate_terrain_mesh(lidar_laz_file_path, ply_save_path, src_crs="EPSG:3857
     # # Show the plot
     # plotter.show()
     
+    
     surface_mesh = point_cloud.delaunay_2d()
+    
+    print("Ori # of faces: ", surface_mesh.n_faces)
 
+    pro_decimated = surface_mesh.decimate_pro(0.90, preserve_topology=True)
+    print("pro_decimated # of faces: ", pro_decimated.n_faces)
+    surface_mesh = pro_decimated
             # Extract vertices and faces from the PyVista surface mesh
     vertices = surface_mesh.points
     faces = surface_mesh.faces.reshape(-1, 4)[:, 1:4]  # Ignore the first element which is the number of vertices per face
