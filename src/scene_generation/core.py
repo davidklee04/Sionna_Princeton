@@ -299,15 +299,15 @@ class Scene:
         # ---------------------------------------------------------------------
         # 0) Query USGS 3DEP LiDAR data and generate GEOTIFF file for building height calibration
         # ---------------------------------------------------------------------
-        
-        from .USGS_LiDAR_HAG import generate_hag
-        from .lidar_terrain_mesh import generate_terrain_mesh
-        
-        generate_hag(ground_polygon_4326, data_dir, projection_UTM_EPSG_code)
-        
-        surface_mesh = generate_terrain_mesh(os.path.join(data_dir, "test_hag.laz"),
-                os.path.join(mesh_data_dir, f"lidar_terrain.ply"), src_crs=projection_UTM_EPSG_code, dest_crs=projection_UTM_EPSG_code,
-                plot_figures=False, center_x=center_x, center_y=center_y)
+        if lidar_terrain:
+            from .USGS_LiDAR_HAG import generate_hag
+            from .lidar_terrain_mesh import generate_terrain_mesh
+            
+            generate_hag(ground_polygon_4326, data_dir, projection_UTM_EPSG_code)
+            
+            surface_mesh = generate_terrain_mesh(os.path.join(data_dir, "test_hag.laz"),
+                    os.path.join(mesh_data_dir, f"lidar_terrain.ply"), src_crs=projection_UTM_EPSG_code, dest_crs=projection_UTM_EPSG_code,
+                    plot_figures=False, center_x=center_x, center_y=center_y)
         
         
 
