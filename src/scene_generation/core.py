@@ -479,6 +479,9 @@ class Scene:
             else:
                 building_height = random_building_height(building, building_polygon)
 
+            # Skip buildings with height <= 0
+            if building_height <=0:
+                continue
             # building_height = NYC_LiDAR_building_height(building, building_polygon)
 
             outer_xy = unique_coords(
@@ -587,14 +590,30 @@ class Scene:
             top_vertex_indices = np.where(z_values == building_height + building_z_value)[
                 0
             ].tolist()  # Indices of top vertices
+            #print("top vertex indices: ", top_vertex_indices)
+            
 
 
 
             # Extract the top surface
             top_surface = wedge_t.select_by_index(top_vertex_indices)
 
-            other_faces_np = faces_np[face_centroids[:, 2] < building_height]
-
+            other_faces_np = faces_np[face_centroids[:, 2] < building_height+building_z_value]
+            if len(other_faces_np) == 0:
+                print("All vertices: ", vertices_np)
+                print("top vertex indices: ", top_vertex_indices)
+                print("max height of meshes: ", np.max(z_values))
+                print("min height of meshes: ", np.min(z_values))
+                print("building height: ", building_height)
+                print("building z value: ", building_z_value)
+                print("building height + building z value: ", building_height + building_z_value)
+                
+            
+                print("other faces np: ", other_faces_np)
+                print("max height of meshes: ", np.max(z_values))
+                print("building height: ", building_height)
+                print("building z value: ", building_z_value)
+                print("building height + building z value: ", building_height + building_z_value)
             # Convert to Open3D Tensor API
             other_faces_o3c = o3c.Tensor(other_faces_np, dtype=o3c.int32)
 
