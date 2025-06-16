@@ -221,19 +221,26 @@ class Scene:
         for material_id, material_content in ITU_MATERIALS.items():
             
             # Temporary workaround for Sionna v1.1 : Skip vacuum and P.527 materials.
-            if "vacuum" in material_id or "P.527" in material_id:
+            if "vacuum" in material_id in material_id:
                 continue
-            bsdf_twosided = ET.SubElement(
-                scene, "bsdf", type="twosided", id=material_id
-            )
-            bsdf_diffuse = ET.SubElement(bsdf_twosided, "bsdf", type="diffuse")
-            rgb = material_content["mitsuba_color"]
-            ET.SubElement(
-                bsdf_diffuse,
-                "rgb",
-                value=f"{rgb[0]} {rgb[1]} {rgb[2]}",
-                name="reflectance",
-            )
+
+            if "P.527" not in material_id:
+                bsdf_twosided = ET.SubElement(
+                    scene, "bsdf", type="twosided", id=material_id
+                )
+                bsdf_diffuse = ET.SubElement(bsdf_twosided, "bsdf", type="diffuse")
+                rgb = material_content["mitsuba_color"]
+                ET.SubElement(
+                    bsdf_diffuse,
+                    "rgb",
+                    value=f"{rgb[0]} {rgb[1]} {rgb[2]}",
+                    name="reflectance",
+                )
+            else:
+                bsdf_twosided = ET.SubElement(
+                    scene, "bsdf", type="radio-material", id=material_id
+                )
+                
 
         # Add emitter (constant environment light)
         emitter = ET.SubElement(scene, "emitter", type="constant", id="World")

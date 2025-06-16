@@ -100,19 +100,19 @@ ITU_MATERIALS = {
         "upper_freq_limit": 10e9,
         "mitsuba_color": (0.91, 0.569, 0.055)
     },
-    "mat-itu_very_dry_ground_P.527": {
+    "mat-very_dry_ground_P.527": {
         "name": "Very Dry Ground (Extended Range, ITU P.527-3)",
         "lower_freq_limit": 1e4,
         "upper_freq_limit": 3e11,
         "mitsuba_color": (0.4980, 0.4980, 0.4980),
     },
-    "mat-itu_medium_dry_ground_P.527": {
+    "mat-medium_dry_ground_P.527": {
         "name": "Medium Dry Ground (Extended Range, ITU P.527-3)",
         "lower_freq_limit": 1e4,
         "upper_freq_limit": 3e11,
         "mitsuba_color":(0.7804, 0.7804, 0.7804),
     },
-    "mat-itu_wet_ground_P.527": {
+    "mat-wet_ground_P.527": {
         "name": "Wet Ground (Extended Range, ITU P.527-3)",
         "lower_freq_limit": 1e4,
         "upper_freq_limit": 3e11,
@@ -128,11 +128,11 @@ from scipy.interpolate import make_smoothing_spline
 def get_material(material_name):
     from sionna.rt import RadioMaterial
     material_dict = {
-        "mat-itu_wet_ground_P.527":RadioMaterial("itu_wet_ground_P.527",
+        "mat-wet_ground_P.527":RadioMaterial("wet_ground_P.527_impl",
                                                  frequency_update_callback=wet_ground_ITU_P527_callback),
-        "mat-itu_medium_dry_ground_P.527":RadioMaterial("itu_medium_dry_ground_P.527",
+        "mat-medium_dry_ground_P.527":RadioMaterial("medium_dry_ground_P.527_impl",
                                                         frequency_update_callback=medium_dry_ground_ITU_P527_callback),
-        "mat-itu_very_dry_ground_P.527":RadioMaterial("itu_very_dry_ground_P.527",
+        "mat-very_dry_ground_P.527":RadioMaterial("very_dry_ground_P.527_impl",
                                                         frequency_update_callback=very_dry_ground_ITU_P527_callback),
     }
     if material_name not in material_dict.keys():
