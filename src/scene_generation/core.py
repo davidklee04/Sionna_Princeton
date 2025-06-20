@@ -310,7 +310,7 @@ class Scene:
             from .USGS_LiDAR_HAG import generate_hag
             from .lidar_terrain_mesh import generate_terrain_mesh
             
-            generate_hag(ground_polygon_4326, data_dir, projection_UTM_EPSG_code)
+            generate_hag(affinity.scale(ground_polygon_4326, xfact=ground_scale, yfact=ground_scale, origin='centroid'), data_dir, projection_UTM_EPSG_code)
             
             surface_mesh = generate_terrain_mesh(os.path.join(data_dir, "test_hag.laz"),
                     os.path.join(mesh_data_dir, f"lidar_terrain.ply"), src_crs=projection_UTM_EPSG_code, dest_crs=projection_UTM_EPSG_code,
