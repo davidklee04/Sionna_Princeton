@@ -99,12 +99,6 @@ class Scene:
             raise ValueError(f"Invalid rooftop material type: {rooftop_material_type}")
         if wall_material_type not in ITU_MATERIALS:
             raise ValueError(f"Invalid wall material type: {wall_material_type}")
-
-
-
-
-        
-        
         
         # ---------------------------------------------------------------------
         # 1) Setup OSM server and transforms
