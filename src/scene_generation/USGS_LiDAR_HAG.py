@@ -340,6 +340,8 @@ def generate_hag(polygon, data_dir, CRS="EPSG:3857"):
             intersecting_polys.append((names[i], geometries_GCS[i], geometries_EPSG3857[i], urls[i], num_points[i]))
 
     print(f"Found {len(intersecting_polys)} intersecting datasets")
+    if len(intersecting_polys) ==0:
+        raise ValueError("No LiDAR data available for the selected region.")
 
     usgs_3dep_datasets = [poly[0] for poly in intersecting_polys]
     
