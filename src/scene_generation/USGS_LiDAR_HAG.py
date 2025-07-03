@@ -293,6 +293,54 @@ def make_DEM_pipeline(extent_epsg3857, usgs_3dep_dataset_name, pc_resolution, de
 
     return dem_pipeline
 
+class CoverageChecker:
+    def __init__(self, file_path: str="resources.geojson"):
+        print("Loading 3DEP resources.geojson...")
+        if not os.path.exists("resources.geojson"):
+            #print("Requesting, loading, and projecting 3DEP dataset polygons...")
+            url = 'https://raw.githubusercontent.com/hobuinc/usgs-lidar/master/boundaries/resources.geojson'
+            r = requests.get(url)
+            with open('resources.geojson', 'w') as f:
+                f.write(r.content.decode("utf-8"))
+        with open('resources.geojson', 'r') as f:
+            df =  gpd.read_file(f) 
+            self.names = df['name']
+            self.urls = df['url']
+            self.num_points = df['count']
+            self.df =df
+            projected_geoms = []
+            for geometry in self.df['geometry']:
+                projected_geoms.append(gcs_to_proj(geometry))
+
+            self.geometries_GCS = self.df['geometry']
+            self.geometries_EPSG3857 = gpd.GeoSeries(projected_geoms)
+
+    def is_polygon_inside_3DEP(self, polygon: Polygon, polygon_CRS="EPSG:3857") -> bool:
+        """
+        Checks if a given polygon is inside LiDAR dataset geometries.
+
+        Parameters:
+            polygon (Polygon): The Shapely polygon to check.
+
+        Returns:
+            bool: True if condition is met, otherwise False.
+        """
+        
+
+        AOI_EPSG3857 = proj_to_3857(polygon, "EPSG:4326")[1]
+
+        intersecting_polys = []
+        for i, geom in enumerate(self.geometries_EPSG3857):
+            #if geom.intersects(AOI_EPSG3857):
+            if AOI_EPSG3857.within(geom):
+                intersecting_polys.append((self.names[i], self.geometries_GCS[i], self.geometries_EPSG3857[i], self.urls[i], self.num_points[i]))
+
+        if len(intersecting_polys) ==0:
+            return False
+        return True
+
+    
+
 def generate_hag(polygon, data_dir, CRS="EPSG:3857"):
     """
     Generate Height Above Ground (HAG) data for a given polygon area.
@@ -314,9 +362,6 @@ def generate_hag(polygon, data_dir, CRS="EPSG:3857"):
         print("Loading local 3DEP dataset polygons...")
 
     with open('resources.geojson', 'r') as f:
-        geojsons_3DEP = json.load(f)
-
-    with open('resources.geojson', 'r') as f:
         df = gpd.read_file(f)
         names = df['name']
         urls = df['url']
@@ -336,7 +381,8 @@ def generate_hag(polygon, data_dir, CRS="EPSG:3857"):
 
     intersecting_polys = []
     for i, geom in enumerate(geometries_EPSG3857):
-        if geom.intersects(AOI_EPSG3857):
+        # if geom.intersects(AOI_EPSG3857):
+        if AOI_EPSG3857.within(geom):
             intersecting_polys.append((names[i], geometries_GCS[i], geometries_EPSG3857[i], urls[i], num_points[i]))
 
     print(f"Found {len(intersecting_polys)} intersecting datasets")
