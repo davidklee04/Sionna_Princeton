@@ -627,12 +627,12 @@ class Scene:
             o3d.t.io.write_triangle_mesh(
                 os.path.join(mesh_data_dir, f"building_{idx}_rooftop.ply"),
                 top_surface,
-                write_ascii=True,
+                write_ascii=write_ply_ascii,
             )
             o3d.t.io.write_triangle_mesh(
                 os.path.join(mesh_data_dir, f"building_{idx}_wall.ply"),
                 wall_mesh,
-                write_ascii=True,
+                write_ascii=write_ply_ascii,
             )
 
             # o3d.t.io.write_triangle_mesh(os.path.join(mesh_data_dir, f"building_{idx}.ply"), wedge, write_ascii=write_ply_ascii)
