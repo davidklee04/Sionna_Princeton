@@ -24,6 +24,7 @@ import open3d.core as o3c
 import datetime
 
 import pyvista as pv
+from pathlib import Path
 
 
 # Create a module-level logger
@@ -63,6 +64,7 @@ class Scene:
         rooftop_material_type="mat-itu_metal",
         wall_material_type="mat-itu_concrete",
         lidar_terrain:bool = False,
+        gen_lidar_terrain_only:bool = False
     ):
         """
         Generate a ground mesh from the given polygon (defined by `points`),
@@ -300,18 +302,41 @@ class Scene:
         # ---------------------------------------------------------------------
         # 0) Query USGS 3DEP LiDAR data and generate GEOTIFF file for building height calibration
         # ---------------------------------------------------------------------
-        if lidar_terrain:
-            from .USGS_LiDAR_HAG import generate_hag
-            from .lidar_terrain_mesh import generate_terrain_mesh
+        try:
+            laz_file_path = Path(os.path.join(data_dir, "test_hag.laz"))
+            tif_file_path = Path(os.path.join(data_dir, "test_hag.tif"))
+            if lidar_terrain:
+                if not laz_file_path.exists() or not tif_file_path.exists():
+                    
+                    from .USGS_LiDAR_HAG import generate_hag
+                    
+                    generate_hag(affinity.scale(ground_polygon_4326, xfact=ground_scale, yfact=ground_scale, origin='centroid'), data_dir, projection_UTM_EPSG_code)
+                
+    
             
-            generate_hag(affinity.scale(ground_polygon_4326, xfact=ground_scale, yfact=ground_scale, origin='centroid'), data_dir, projection_UTM_EPSG_code)
-            
-            surface_mesh = generate_terrain_mesh(os.path.join(data_dir, "test_hag.laz"),
-                    os.path.join(mesh_data_dir, f"lidar_terrain.ply"), src_crs=projection_UTM_EPSG_code, dest_crs=projection_UTM_EPSG_code,
-                    plot_figures=False, center_x=center_x, center_y=center_y)
-        
-        
 
+    
+            if lidar_terrain:
+                from .lidar_terrain_mesh import generate_terrain_mesh
+    
+    
+    
+                assert laz_file_path.exists(), f"LAZ file does not exist: {laz_file_path}"
+    
+                assert tif_file_path.exists(), f"TIF file does not exist: {tif_file_path}"
+                print("Skip the lidar_terrain.ply")
+                if not Path(os.path.join(data_dir,"mesh" ,"lidar_terrain.ply")).exists():
+                    generate_terrain_mesh(os.path.join(data_dir, "test_hag.laz"),
+                        os.path.join(mesh_data_dir, f"lidar_terrain.ply"), src_crs=projection_UTM_EPSG_code, dest_crs=projection_UTM_EPSG_code,
+                        plot_figures=False, center_x=center_x, center_y=center_y
+                    )
+            if gen_lidar_terrain_only:
+                print("gen_lidar_terrain_only: True")
+                return
+        except Exception as e:
+            print(e)
+
+        surface_mesh = pv.read(Path(os.path.join(data_dir,"mesh" ,"lidar_terrain.ply")))
         #######Open3D#######
         outer_xy = unique_coords(
             reorder_localize_coords(ground_polygon.exterior, center_x, center_y)
