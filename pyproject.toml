@@ -12,6 +12,10 @@ dependencies = [
     "open3d",
     "triangle",
     "scikit-learn",
+    "pyvista",
+    "importlib_resources",
+    "laspy[laszip]",
+    "plyfile"
 ]
 requires-python = ">=3.9"
 
