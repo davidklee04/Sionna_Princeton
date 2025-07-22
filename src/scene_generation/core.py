@@ -108,7 +108,7 @@ class Scene:
         if osm_server_addr:
             ox.settings.overpass_url = osm_server_addr
             ox.settings.overpass_rate_limit = False
-
+        ox.settings.use_cache = False
         # Determine the UTM projection from the first point
         projection_UTM_EPSG_code = get_utm_epsg_code_from_gps(
             points[0][0], points[0][1]
@@ -335,8 +335,11 @@ class Scene:
                 return
         except Exception as e:
             print(e)
-
-        surface_mesh = pv.read(Path(os.path.join(data_dir,"mesh" ,"lidar_terrain.ply")))
+        if lidar_terrain:
+            lidar_terrain_ply_path = Path(os.path.join(data_dir,"mesh" ,"lidar_terrain.ply"))
+            if not lidar_terrain_ply_path.exists():
+                return 1
+            surface_mesh = pv.read(lidar_terrain_ply_path)
         #######Open3D#######
         outer_xy = unique_coords(
             reorder_localize_coords(ground_polygon.exterior, center_x, center_y)
@@ -519,29 +522,48 @@ class Scene:
                 mesh = surface_mesh
                 # Z bounds of the mesh
                 bottom, top = mesh.bounds[-2:]
-                buffer = 1.0
-                res_z = []
-                for points in outer_xy:
-                    # Define two points that form a line that interesects the mesh
-                    x = points[0]
-                    y = points[1]
-                    start = [x, y, bottom - buffer]
-                    stop = [x, y, top + buffer]
+                # buffer = 1.0
+                # res_z = []
+                # for points in outer_xy:
+                #     # Define two points that form a line that interesects the mesh
+                #     x = points[0]
+                #     y = points[1]
+                #     start = [x, y, bottom - buffer]
+                #     stop = [x, y, top + buffer]
                     
-                    # Perform ray trace
-                    points, ind = mesh.ray_trace(start, stop)
+                #     # Perform ray trace
+                #     points, ind = mesh.ray_trace(start, stop)
                     
-                    # Create geometry to represent ray trace
-                    ray = pv.Line(start, stop)
-                    intersection = pv.PolyData(points)
-                    res_z.append(intersection.bounds[-1])
+                #     # Create geometry to represent ray trace
+                #     ray = pv.Line(start, stop)
+                #     intersection = pv.PolyData(points)
+                #     res_z.append(intersection.bounds[-1])
 
-                res_z = np.array(res_z)
-                res_z[res_z == -1e+299] = 1e+299
-                #print(res_z)
-                building_z_value = int(np.floor(np.min(res_z)))
+                # res_z = np.array(res_z)
+                # res_z[res_z == -1e+299] = 1e+299
+                # #print(res_z)
+                # building_z_value = int(np.floor(np.min(res_z)))
 
                 
+                # if building_z_value > 1e+20:
+                #     building_z_value = 0
+
+                from concurrent.futures import ThreadPoolExecutor
+
+                def ray_trace_z(x, y):
+                    start = [x, y, bottom - 1.0]
+                    stop = [x, y, top + 1.0]
+                    points, ind = mesh.ray_trace(start, stop)
+                    if points.shape[0] == 0:
+                        return 1e+299
+                    return np.max(points[:, 2])
+
+                with ThreadPoolExecutor() as executor:
+                    res_z_parallel = list(executor.map(lambda pt: ray_trace_z(pt[0], pt[1]), outer_xy))
+                building_z_value = int(np.floor(np.min(res_z_parallel)))
+                #building_z_value = int(np.floor(np.min(res_z)))
+
+                #assert building_z_value_parallel == building_z_value, f"differ value for parallel and single-thread:\n\t parallel {building_z_value_parallel} single-threaded {building_z_value}"
                 if building_z_value > 1e+20:
                     building_z_value = 0
             else:
@@ -694,7 +716,7 @@ class Scene:
         xml_string = ET.tostring(scene, encoding="utf-8")
         xml_pretty = minidom.parseString(xml_string).toprettyxml(
             indent="    "
-        )  # Adjust the indent as needed
+        )  # Adjust the infdent as needed
 
         with open(
             os.path.join(data_dir, "scene.xml"), "w", encoding="utf-8"
@@ -706,7 +728,6 @@ class Scene:
                 os.path.join(data_dir, "2D_Building_Height_Map.npy"),
                 np.array(self._building_map),
             )
-
         return np.array(self._building_map)
 
     def _draw_building(self, building_polygon, building_height):
