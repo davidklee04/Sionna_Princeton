@@ -56,7 +56,7 @@ class Scene:
         data_dir,
         hag_tiff_path,
         osm_server_addr=None,
-        lidar_calibration: bool = True,
+        lidar_calibration: bool = False,
         generate_building_map: bool = True,
         write_ply_ascii: bool = False,
         ground_scale: float = 1.5,
@@ -305,7 +305,7 @@ class Scene:
         try:
             laz_file_path = Path(os.path.join(data_dir, "test_hag.laz"))
             tif_file_path = Path(os.path.join(data_dir, "test_hag.tif"))
-            if lidar_terrain:
+            if lidar_terrain or lidar_calibration:
                 if not laz_file_path.exists() or not tif_file_path.exists():
                     
                     from .USGS_LiDAR_HAG import generate_hag
@@ -728,6 +728,7 @@ class Scene:
                 os.path.join(data_dir, "2D_Building_Height_Map.npy"),
                 np.array(self._building_map),
             )
+
         return np.array(self._building_map)
 
     def _draw_building(self, building_polygon, building_height):
