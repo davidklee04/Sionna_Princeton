@@ -1,0 +1,33 @@
+ply
+format ascii 1.0
+comment Created by Open3D
+element vertex 10
+property double x
+property double y
+property double z
+element face 13
+property list uchar uint vertex_indices
+end_header
+-54.6299 4.11162 0
+-52.8839 -2.42018 0
+-78.3022 -9.1885 0
+-80.0568 -2.66776 0
+-75.0688 -1.34044 0
+-54.6299 4.11162 17.5
+-52.8839 -2.42018 17.5
+-78.3022 -9.1885 17.5
+-80.0568 -2.66776 17.5
+-75.0688 -1.34044 17.5
+3 3 2 4
+3 4 1 0
+3 1 4 2
+3 3 2 8
+3 8 2 7
+3 4 3 9
+3 9 3 8
+3 1 0 6
+3 6 0 5
+3 0 4 5
+3 5 4 9
+3 2 1 7
+3 7 1 6
