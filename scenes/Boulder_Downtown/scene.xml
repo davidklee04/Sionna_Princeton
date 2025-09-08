@@ -3,8 +3,8 @@
     <default name="spp" value="4096"/>
     <default name="resx" value="1024"/>
     <default name="resy" value="1024"/>
-    <default name="scenegen_version" value="1.0.0"/>
-    <default name="scenegen_create_time" value="2025-08-11 17:29:50.563607"/>
+    <default name="scenegen_version" value="0.0.0.dev (uninstalled)"/>
+    <default name="scenegen_create_time" value="2025-09-08 15:35:10.946233"/>
     <default name="scenegen_min_lat" value="40.01479425732407"/>
     <default name="scenegen_max_lat" value="40.01940720667374"/>
     <default name="scenegen_min_lon" value="-105.28225078380731"/>
