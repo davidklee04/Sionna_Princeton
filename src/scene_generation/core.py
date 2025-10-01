@@ -64,7 +64,8 @@ class Scene:
         rooftop_material_type="mat-itu_metal",
         wall_material_type="mat-itu_concrete",
         lidar_terrain:bool = False,
-        gen_lidar_terrain_only:bool = False
+        gen_lidar_terrain_only:bool = False,
+        max_error = 0
     ):
         """
         Generate a ground mesh from the given polygon (defined by `points`),
@@ -513,8 +514,10 @@ class Scene:
                 continue
             # building_height = NYC_LiDAR_building_height(building, building_polygon)
 
+            # add max_error offset
+            deltas = np.random.uniform(-max_error, max_error, size=2)
             outer_xy = unique_coords(
-                reorder_localize_coords(building_polygon.exterior, center_x, center_y)
+                reorder_localize_coords(building_polygon.exterior, center_x + deltas[0], center_y + deltas[1])
             )
             
             

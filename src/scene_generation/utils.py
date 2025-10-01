@@ -215,6 +215,12 @@ def rect_from_point_and_size(
         max_lat_top = point_utm[1] + height/2
         min_lat_bottom = point_utm[1] - height/2
 
+    elif position =="center-top":
+        min_lon_left = point_utm[0] - width/2
+        max_lon_right = point_utm[0] + width/2
+        max_lat_top = point_utm[1]
+        min_lat_bottom = point_utm[1] - height
+
 
     else:
         raise ValueError(f"Unknown position: {position}. "
